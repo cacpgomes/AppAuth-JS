@@ -16,6 +16,7 @@ import {StringMap} from './types';
 
 export const GRANT_TYPE_AUTHORIZATION_CODE = 'authorization_code';
 export const GRANT_TYPE_REFRESH_TOKEN = 'refresh_token';
+export const GRANT_TYPE_CLIENT_CREDENTIALS = 'client_credentials';
 
 /**
  * Represents the Token Request as JSON.
@@ -23,9 +24,11 @@ export const GRANT_TYPE_REFRESH_TOKEN = 'refresh_token';
 export interface TokenRequestJson {
   grant_type: string;
   code?: string;
-  refresh_token?: string, redirect_uri: string;
-  client_id: string;
+  refresh_token?: string;
+  redirect_uri?: string;
+  client_id: string, client_secret?: string;
   extras?: StringMap;
+  scope?: string;
 }
 
 
@@ -36,19 +39,23 @@ export interface TokenRequestJson {
  */
 export class TokenRequest {
   clientId: string;
-  redirectUri: string;
+  clientSecret: string|undefined;
+  redirectUri: string|undefined;
   grantType: string;
   code: string|undefined;
   refreshToken: string|undefined;
-  extras: StringMap|undefined
+  extras: StringMap|undefined;
+  scope: string|undefined;
 
   constructor(request: TokenRequestJson) {
     this.clientId = request.client_id;
+    this.clientSecret = request.client_secret;
     this.redirectUri = request.redirect_uri;
     this.grantType = request.grant_type;
     this.code = request.code;
     this.refreshToken = request.refresh_token;
     this.extras = request.extras;
+    this.scope = request.scope;
   }
 
   /**
@@ -61,7 +68,9 @@ export class TokenRequest {
       refresh_token: this.refreshToken,
       redirect_uri: this.redirectUri,
       client_id: this.clientId,
-      extras: this.extras
+      client_secret: this.clientSecret,
+      extras: this.extras,
+      scope: this.scope
     };
   }
 
@@ -69,8 +78,11 @@ export class TokenRequest {
     let map: StringMap = {
       grant_type: this.grantType,
       client_id: this.clientId,
-      redirect_uri: this.redirectUri
     };
+
+    if (this.redirectUri) {
+      map['redirect_uri'] = this.redirectUri;
+    }
 
     if (this.code) {
       map['code'] = this.code;
@@ -78,6 +90,14 @@ export class TokenRequest {
 
     if (this.refreshToken) {
       map['refresh_token'] = this.refreshToken;
+    }
+
+    if (this.clientSecret) {
+      map['client_secret'] = this.clientSecret;
+    }
+
+    if (this.scope) {
+      map['scope'] = this.scope;
     }
 
     // copy over extras
